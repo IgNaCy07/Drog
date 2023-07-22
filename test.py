@@ -1,0 +1,1 @@
+__drog_builtins__.print('Hello, world!')

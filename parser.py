@@ -1,9 +1,13 @@
+'''Bad code ahead, read at your own risk.'''
+from asty import *
+
 def todo(descr):
     raise ValueError('todo: '+descr)
 
 #tokenize
 chartoks = ':()[]{}.'
 class Ungitter:
+    '''Parsing state object, also holds some convenience methods'''
     def __init__(self,iterable):
         self.iter = iter(iterable)
         self.last = None
@@ -67,15 +71,22 @@ def tokenize(code):
     yield 'THE END'
 
 #parsing
-from asty import *
 def parse(code):
     tokens = Ungitter(tokenize(code))
-    dfns = []
+    stmts = []
     try:
         while True:
-            dfns.append(parse_dfn(tokens))
+            stmts.append(parse_stmt(tokens))
     except StopIteration: pass
-    return dfns
+    return stmts
+
+def parse_stmt(toks):
+    #keyworded stmts
+    if toks.pop('type'): todo('type definition')
+    e = parse_expr(toks)
+    if toks.peek()[-1] == '=': todo('assignment')
+    elif toks.peek() in ':{': todo('funcdef')
+    else: return e
 
 def parse_dfn(toks):
     t = next(toks)
@@ -85,7 +96,7 @@ def parse_dfn(toks):
         if toks.peek() == '(': args = parse_args(toks)
         else: args = []
         body = parse_block(toks)
-        return Function(name, args, body)
+        return FuncDef(name, args, body)
 
 def parse_block(toks):
     colon = toks.pop(':')
@@ -104,16 +115,6 @@ def parse_block(toks):
         if dent and toks.dent == dent: cont = True #popping should get to a newline, acquiring the dent
     return stmts
 
-def parse_stmt(toks):
-    t = next(toks)
-    #keyworded stmts
-    if False:
-        pass
-    toks.unget(t)
-    e = parse_expr(toks)
-    if toks.peek()[-1] == '=': todo('assignment')
-    return Expr(e)
-
 def parse_expr(toks, prec=0):
     #literal
     t = next(toks)
@@ -122,7 +123,7 @@ def parse_expr(toks, prec=0):
         t = next(toks)
     else: curr = Id(t)
     if t == '.':
-        curr = Method(curr, parse_expr(toks))
+        curr = Dot(curr, parse_expr(toks))
         t = next(toks)
     #operators
     return curr

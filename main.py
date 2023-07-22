@@ -24,11 +24,15 @@ else:
 #process
 with open(infile) as f: code = f.read()
 from parser import parse
-dfns = parse(code)
-print(dfns)
-#stuff:tm:
+stmts = parse(code)
+from structs import Symtable
+from bltn import builtins
+st = Symtable(builtins)
+for s in stmts: st.proc(s)
 
 #compile
 lang = 'py' #for now
 backend = __import__('backend_'+lang)
-backend.compile(dfns, outfile, **opts)
+prog = backend.compile(st, **opts)
+with open(outfile, 'w') as f:
+    f.write(prog)
